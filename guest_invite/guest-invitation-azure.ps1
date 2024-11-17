@@ -1,4 +1,4 @@
-
+#Requires -Modules Microsoft.Graph.Identity.SignIns, Microsoft.Graph.Users
 Import-Module Microsoft.Graph.Users
 Import-Module Microsoft.Graph.Identity.SignIns
 
