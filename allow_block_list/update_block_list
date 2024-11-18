@@ -1,0 +1,25 @@
+
+$policyName = "B2BManagementPolicy" 
+$newDomain = "newdomain.com" 
+
+
+$policy = Get-AzureADPolicy | Where-Object {$_.DisplayName -eq $policyName}
+
+if ($policy) {
+
+    $policyId = $policy.Id
+
+
+    $policyDefinition = $policy.Definition
+ 
+    if ($policyDefinition.B2BManagementPolicy.InvitationsAllowedAndBlockedDomainsPolicy.AllowedDomains) {
+        $policyDefinition.B2BManagementPolicy.InvitationsAllowedAndBlockedDomainsPolicy.AllowedDomains += $newDomain
+    } else {
+      
+        $policyDefinition.B2BManagementPolicy.InvitationsAllowedAndBlockedDomainsPolicy | Add-Member -MemberType NoteProperty -Name AllowedDomains -Value @($newDomain)
+    }
+
+    Set-AzureADPolicy -Id $policyId -Definition $policyDefinition
+
+   
+} 
