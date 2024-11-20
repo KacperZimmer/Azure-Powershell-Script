@@ -57,7 +57,7 @@ function GetExistingAllowedDomainList() {
 } 
 
 
-$allowedDomainsSPO = Get-SPOTenant | select -ExpandProperty SharingAllowedDomainList$allowedDomains 
+$allowedDomainsSPO = Get-SPOTenant | select -ExpandProperty SharingAllowedDomainList
 $allowedDomainsSPO = @($allowedDomainsSPO)
 Set-B2BManagementPolicy -AllowList $allowedDomainsSPO
 
