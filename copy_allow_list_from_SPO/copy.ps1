@@ -21,6 +21,8 @@ function Set-B2BManagementPolicy {
         Write-Host "`nSetting AllowDomainList for B2BManagementPolicy (APPEND).`n"
 
     }
+    $policyValue = GetJSONForAllowBlockDomainPolicy -AllowDomains $AllowList
+
     
     New-AzureADPolicy `
     -Definition $policyValue `
@@ -29,7 +31,6 @@ function Set-B2BManagementPolicy {
     -IsOrganizationDefault $true `
     -InformationAction Ignore | Out-Null
    
-    $policyValue = GetJSONForAllowBlockDomainPolicy -AllowDomains $AllowList
     
 }
 
@@ -57,6 +58,7 @@ function GetExistingAllowedDomainList() {
 
 
 $allowedDomainsSPO = Get-SPOTenant | select -ExpandProperty SharingAllowedDomainList$allowedDomains 
+$allowedDomainsSPO = @($allowedDomainsSPO)
 Set-B2BManagementPolicy -AllowList $allowedDomainsSPO
 
 
