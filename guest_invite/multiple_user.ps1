@@ -41,4 +41,4 @@ $usersToInvite = @(
     @{ Email = "user3@example.com"; Name = "User Three" }
 )
 
-Send-MgInvitations -UserList $usersToInvite -RedirectUrl "https://myapplications.microsoft.com/?tenantid=aaaabbbb-0000-cccc-1111-dddd2222eeee"
+Send-MgInvitations -UserList $usersToInvite -RedirectUrl "https://myapplications.microsoft.com/"
