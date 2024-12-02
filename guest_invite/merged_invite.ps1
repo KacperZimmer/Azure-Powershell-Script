@@ -7,8 +7,7 @@ Connect-MgGraph -Scopes 'User.ReadWrite.All'
 
 $applicationId = ""
 
-$extensionName = "companyNumber"
-
+$extensionName = "snowApp"
 
 
 function UpdateUserProfileAndAddExtension {
@@ -16,16 +15,16 @@ function UpdateUserProfileAndAddExtension {
         [Parameter(Mandatory = $true)]
         [string]$InvitedUserId,
         [Parameter(Mandatory = $true)]
-        [string]$CustomValue
+        [string]$CustomValue,
+        [Parameter(Mandatory = $true)]
+        [string]$CompanyNumber
     )
 
 
     $extensions = Get-MgApplicationExtensionProperty -ApplicationId $applicationId
     $matchingExtension = $extensions | Where-Object { $_.Name -match $extensionName }
-    $extensionAdname = $matchingExtension | Select-Object -Property Name
-
     if (-not $matchingExtension) {
-        Write-Host "Nie znaleziono rozszerzenia " $extensionName "Tworzenie nowego rozszerzenia..."
+        Write-Host "Nie znaleziono rozszerzenia " + $extensionName + ". Tworzenie nowego rozszerzenia..."
         $params = @{
             Name         = $extensionName
             DataType     = "String"
@@ -34,23 +33,41 @@ function UpdateUserProfileAndAddExtension {
         $matchingExtension = New-MgApplicationExtensionProperty -ApplicationId $applicationId -BodyParameter $params
         Write-Host "Utworzono nowe rozszerzenie: $($matchingExtension.Name)"
     }
-    Write-Host "Znaleziono rozszerzenia " $extensionName "Tworzenie nowego rozszerzenia..."
 
+    $companyNumberExtension = $extensions | Where-Object { $_.Name -match "companyNumber" }
+    if (-not $companyNumberExtension) {
+        Write-Host "Nie znaleziono rozszerzenia 'companyNumber'. Tworzenie nowego rozszerzenia..."
+        $params = @{
+            Name         = "companyNumber"
+            DataType     = "String"
+            TargetObjects = @("User")
+        }
+        $companyNumberExtension = New-MgApplicationExtensionProperty -ApplicationId $applicationId -BodyParameter $params
+        Write-Host "Utworzono nowe rozszerzenie: $($companyNumberExtension.Name)"
+    }
+
+
+    Write-Host "Aktualizowanie profilu użytkownika..."
     Update-MgUser -UserId $InvitedUserId `
                   -JobTitle "Software Developer" `
                   -Department "IT Department" `
                   -CompanyName "YourCompanyName"
 
 
-    $extensionData = @{
+    $snowAppData = @{
         $matchingExtension.Name = $CustomValue
     }
+    Write-Host "Dodawanie właściwości apps"
+    Update-MgUser -UserId $InvitedUserId -AdditionalProperties $snowAppData
 
-    Write-Host "Dodawanie niestandardowej właściwości użytkownikowi..."
-    Update-MgUser -UserId $InvitedUserId -AdditionalProperties $extensionData
 
-
+    $companyNumberData = @{
+        $companyNumberExtension.Name = $CompanyNumber
+    }
+    Write-Host "Dodawanie właściwości companyNumber"
+    Update-MgUser -UserId $InvitedUserId -AdditionalProperties $companyNumberData
 }
+ 
 
 function Send-MgInvitations {
     param (
@@ -77,8 +94,7 @@ function Send-MgInvitations {
             Write-Host "Zaproszenie wysłane do: $($User.Email) (ID zaproszenia: $($invitation.Id))" -ForegroundColor Green
 
             if ($invitation -and $invitation.InvitedUser) {
-                Start-Sleep -Seconds 3
-                UpdateUserProfileAndAddExtension -InvitedUserId $invitation.InvitedUser.Id -CustomValue ($User.CompanyNumber)
+                UpdateUserProfileAndAddExtension -InvitedUserId $invitation.InvitedUser.Id -CustomValue ($User.Applications -join ", ") -CompanyNumber ($User.CompanyNumber)
             }
         } catch {
             Write-Host "Błąd przy wysyłaniu zaproszenia do: $($User.Email). Szczegóły: $_" -ForegroundColor Red
@@ -88,10 +104,9 @@ function Send-MgInvitations {
 
 
 $usersToInvite = @(
-    @{ Email = "user1@example.com"; Name = "User One"; CompanyNumber = "companyNumber" },
-    @{ Email = "user2@example.com"; Name = "User Two"; CompanyNumber = "companyNumber" }
+    @{ Email = "user1@example.com"; Name = "User One"; Applications = @("App32", "App23"); CompanyNumber = "123456" },
+    @{ Email = "user2@example.com"; Name = "User Two"; Applications = @("App3", "App4"); CompanyNumber = "789012" }
 )
-
 $redirectUrl = "https://myapplications.microsoft.com"
 
 
